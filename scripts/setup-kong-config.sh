@@ -1,14 +1,19 @@
 #!/bin/bash
 
-# Create a Kong configuration setup script
+# Create a service for the OpenAI API
+curl -i -X POST http://localhost:8001/services/ \ 
+  --data 'name=openai-api' \ 
+  --data 'url=http://mock.openai.api'
 
-# Step 1: Set up Env Variables
-export KONG_DATABASE=off
-export KONG_PROXY_LISTEN=0.0.0.0:8000
-export KONG_ADMIN_LISTEN=0.0.0.0:8001
+# Create a route for the OpenAI API
+curl -i -X POST http://localhost:8001/routes/ \ 
+  --data 'paths[]=/openai' \ 
+  --data 'service.id=$(curl -s http://localhost:8001/services/openai-api | jq -r '.id)'
 
-# Step 2: Start Kong
-kong reload
+# Add a plugin for rate limiting
+curl -i -X POST http://localhost:8001/services/openai-api/plugins/ \ 
+  --data 'name=rate-limiting' \ 
+  --data 'config.second=5' \ 
+  --data 'config.hour=5000'
 
-# Step 3: Check Kong Status
-kong health
+echo "Kong OpenAI API V1 mock configured successfully!"
