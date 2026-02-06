@@ -12,16 +12,27 @@ provider "docker" {
   host = var.docker_host
 }
 
+
+# Kong Network
+resource "docker_network" "kong_net" {
+  name = "kong_network"
+}
+
 # Kong Database (PostgreSQL)
+
 resource "docker_image" "postgres" {
   name          = "postgres:15-alpine"
   keep_locally  = false
-  pull_image    = true
+
 }
 
 resource "docker_container" "kong_db" {
   name  = "kong-database"
   image = docker_image.postgres.image_id
+
+  networks_advanced {
+    name = docker_network.kong_net.name
+  }
 
   env = [
     "POSTGRES_DB=kong",
@@ -46,19 +57,23 @@ resource "docker_container" "kong_db" {
     retries  = 5
   }
 
-  restart_policy = "always"
+  restart = "always"
 }
 
 # Kong Gateway
 resource "docker_image" "kong" {
-  name          = "kong:3.4-alpine"
+  name          = "kong:3.4"
   keep_locally  = false
-  pull_image    = true
+
 }
 
 resource "docker_container" "kong_gateway" {
   name  = "kong-gateway"
   image = docker_image.kong.image_id
+
+  networks_advanced {
+    name = docker_network.kong_net.name
+  }
 
   depends_on = [
     docker_container.kong_db,
@@ -67,7 +82,7 @@ resource "docker_container" "kong_gateway" {
 
   env = [
     "KONG_DATABASE=postgres",
-    "KONG_PG_HOST=${docker_container.kong_db.hostname}",
+    "KONG_PG_HOST=${docker_container.kong_db.name}",
     "KONG_PG_PORT=5432",
     "KONG_PG_USER=${var.kong_db_user}",
     "KONG_PG_PASSWORD=${var.kong_db_password}",
@@ -112,21 +127,25 @@ resource "docker_container" "kong_gateway" {
     retries  = 5
   }
 
-  restart_policy = "always"
+  restart = "always"
 }
 
 # Run Kong DB Migration
 resource "docker_container" "kong_migration" {
   name              = "kong-migration"
   image             = docker_image.kong.image_id
-  rm                = true
+  rm                = false
   must_run          = false
+  
+  networks_advanced {
+    name = docker_network.kong_net.name
+  }
   
   depends_on        = [docker_container.kong_db]
 
   env = [
     "KONG_DATABASE=postgres",
-    "KONG_PG_HOST=${docker_container.kong_db.hostname}",
+    "KONG_PG_HOST=${docker_container.kong_db.name}",
     "KONG_PG_PORT=5432",
     "KONG_PG_USER=${var.kong_db_user}",
     "KONG_PG_PASSWORD=${var.kong_db_password}",
