@@ -60,7 +60,10 @@ resource "docker_container" "kong_gateway" {
   name  = "kong-gateway"
   image = docker_image.kong.image_id
 
-  depends_on = [docker_container.kong_db]
+  depends_on = [
+    docker_container.kong_db,
+    docker_container.kong_migration
+  ]
 
   env = [
     "KONG_DATABASE=postgres",
@@ -72,7 +75,9 @@ resource "docker_container" "kong_gateway" {
     "KONG_ADMIN_ACCESS_LOG=/dev/stdout",
     "KONG_PROXY_ERROR_LOG=/dev/stderr",
     "KONG_ADMIN_ERROR_LOG=/dev/stderr",
-    "KONG_ADMIN_LISTEN=0.0.0.0:8001"
+    "KONG_ADMIN_LISTEN=0.0.0.0:8001",
+    "KONG_ADMIN_GUI_LISTEN=0.0.0.0:8002",
+    "KONG_ADMIN_GUI_URL=http://${var.local_server_ip}:${var.kong_manager_port}"
   ]
 
   ports {
@@ -93,6 +98,11 @@ resource "docker_container" "kong_gateway" {
   ports {
     internal = 8444
     external = var.kong_admin_ssl_port
+  }
+
+  ports {
+    internal = 8002
+    external = var.kong_manager_port
   }
 
   healthcheck {
@@ -125,57 +135,10 @@ resource "docker_container" "kong_migration" {
   command = ["kong", "migrations", "bootstrap"]
 }
 
-# Kong Manager (Optional - GUI for Kong)
-resource "docker_image" "kong_manager" {
-  name          = "node:18-alpine"
-  keep_locally  = false
-  pull_image    = true
-}
-
-resource "docker_container" "kong_manager" {
-  name  = "kong-manager"
-  image = docker_image.kong_manager.image_id
-
+resource "null_resource" "kong_config" {
   depends_on = [docker_container.kong_gateway]
 
-  ports {
-    internal = 8080
-    external = var.kong_manager_port
+  provisioner "local-exec" {
+    command = "bash ${path.module}/scripts/setup-kong-config.sh http://${var.local_server_ip}:${var.kong_admin_port}"
   }
-
-  volumes {
-    host_path      = "${path.module}/kong-manager"
-    container_path = "/app"
-  }
-
-  working_dir = "/app"
-  command     = ["npm", "start"]
-
-  env = [
-    "KONG_ADMIN_URL=http://${var.local_server_ip}:${var.kong_admin_port}",
-    "PORT=8080"
-  ]
-
-  restart_policy = "always"
-}
-
-# Output Kong Gateway URLs
-output "kong_gateway_url" {
-  description = "Kong Gateway Proxy URL"
-  value       = "http://${var.local_server_ip}:${var.kong_proxy_port}"
-}
-
-output "kong_admin_api_url" {
-  description = "Kong Admin API URL"
-  value       = "http://${var.local_server_ip}:${var.kong_admin_port}"
-}
-
-output "kong_manager_url" {
-  description = "Kong Manager GUI URL"
-  value       = "http://${var.local_server_ip}:${var.kong_manager_port}"
-}
-
-output "database_host" {
-  description = "Database Host"
-  value       = docker_container.kong_db.hostname
 }

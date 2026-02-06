@@ -18,7 +18,7 @@ kong_admin_port     = 8001
 kong_admin_ssl_port = 8444
 
 # Kong Manager Port
-kong_manager_port = 8080
+kong_manager_port = 8002
 
 # Volume Mount Path
 volume_mount_path = "/tmp/kong-volumes"
