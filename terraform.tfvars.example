@@ -1,0 +1,24 @@
+# Docker Configuration
+docker_host = "unix:///var/run/docker.sock"
+
+# Server Configuration
+local_server_ip = "127.0.0.1"  # Change to your local server IP
+
+# Database Configuration
+kong_db_user     = "kong"
+kong_db_password = "changeme_secure_password"
+postgres_port    = 5432
+
+# Kong Proxy Ports
+kong_proxy_port     = 8000
+kong_proxy_ssl_port = 8443
+
+# Kong Admin API Ports
+kong_admin_port     = 8001
+kong_admin_ssl_port = 8444
+
+# Kong Manager Port
+kong_manager_port = 8080
+
+# Volume Mount Path
+volume_mount_path = "/tmp/kong-volumes"
