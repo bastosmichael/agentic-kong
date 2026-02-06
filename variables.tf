@@ -54,7 +54,7 @@ variable "kong_admin_ssl_port" {
 variable "kong_manager_port" {
   description = "Kong Manager GUI port on the host machine"
   type        = number
-  default     = 8080
+  default     = 8002
 }
 
 variable "volume_mount_path" {
