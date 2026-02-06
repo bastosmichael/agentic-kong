@@ -1,5 +1,5 @@
 variable "docker_host" {
-  description = "Docker daemon host"
+  description = "Docker host socket or URL"
   type        = string
   default     = "unix:///var/run/docker.sock"
 }
@@ -7,60 +7,58 @@ variable "docker_host" {
 variable "local_server_ip" {
   description = "Local server IP address for accessing Kong services"
   type        = string
-  default     = "127.0.0.1"
 }
 
 variable "kong_db_user" {
-  description = "Kong Database username"
+  description = "Kong database username"
   type        = string
-  default     = "kong"
+  sensitive   = true
 }
 
 variable "kong_db_password" {
-  description = "Kong Database password"
+  description = "Kong database password"
   type        = string
   sensitive   = true
-  default     = "kongpassword"
 }
 
 variable "postgres_port" {
-  description = "PostgreSQL port exposed"
+  description = "PostgreSQL port on the host machine"
   type        = number
   default     = 5432
 }
 
 variable "kong_proxy_port" {
-  description = "Kong Proxy port (HTTP)"
+  description = "Kong proxy HTTP port on the host machine"
   type        = number
   default     = 8000
 }
 
 variable "kong_proxy_ssl_port" {
-  description = "Kong Proxy SSL port (HTTPS)"
+  description = "Kong proxy HTTPS port on the host machine"
   type        = number
   default     = 8443
 }
 
 variable "kong_admin_port" {
-  description = "Kong Admin API port"
+  description = "Kong admin API HTTP port on the host machine"
   type        = number
   default     = 8001
 }
 
 variable "kong_admin_ssl_port" {
-  description = "Kong Admin API SSL port"
+  description = "Kong admin API HTTPS port on the host machine"
   type        = number
   default     = 8444
 }
 
 variable "kong_manager_port" {
-  description = "Kong Manager GUI port"
+  description = "Kong Manager GUI port on the host machine"
   type        = number
   default     = 8080
 }
 
 variable "volume_mount_path" {
-  description = "Path on host for persistent volumes"
+  description = "Host path for volume mounts"
   type        = string
   default     = "/tmp/kong-volumes"
 }
